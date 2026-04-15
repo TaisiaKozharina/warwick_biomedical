@@ -3,7 +3,7 @@ import imageio
 import glob
 import matplotlib.pyplot as plt
 
-def training_curve_plot_my(title, train_costs, test_costs, train_accuracy, test_accuracy,
+def training_curve_plot(title, train_costs, test_costs, train_accuracy, test_accuracy,
                         batch_size, learning_rate, num_epochs, elapsed):
 
     plt.style.use('seaborn-v0_8-darkgrid')
