@@ -83,6 +83,7 @@ def training_curve_plot_my(title, train_costs, test_costs, train_accuracy, test_
     axs[1].set_ylim(0, 1)  # Dice is usually between 0 and 1
 
     plt.show()
+    plt.style.use('default')
 
 
 def to_rgb(img_tensor):
