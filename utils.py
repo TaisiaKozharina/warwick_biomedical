@@ -1,88 +1,166 @@
 import numpy as np
 import imageio
 import glob
+import matplotlib.pyplot as plt
 
-def load_mnist():
-    # Loads the MNIST dataset from png images
-    #
-    # Return
-    # X_train - Training input 
-    # Y_train - Training output (one-hot encoded)
-    # X_test - Test input
-    # Y_test - Test output (one-hot encoded)
-    #
-    # Each of them uses rows as data point dimension. Remember to transpose the output if you use columns for data point dimension
- 
-    NUM_LABELS = 10        
-    # create list of image objects
-    test_images = []
-    test_labels = []    
-    
-    for label in range(NUM_LABELS):
-        for image_path in glob.glob("MNIST/Test/" + str(label) + "/*.png"):
-            image = imageio.imread(image_path)
-            test_images.append(image)
-            letter = [0 for _ in range(0,NUM_LABELS)]    
-            letter[label] = 1
-            test_labels.append(letter)  
-            
-    # create list of image objects
-    train_images = []
-    train_labels = []    
-    
-    for label in range(NUM_LABELS):
-        for image_path in glob.glob("MNIST/Train/" + str(label) + "/*.png"):
-            image = imageio.imread(image_path)
-            train_images.append(image)
-            letter = [0 for _ in range(0,NUM_LABELS)]    
-            letter[label] = 1
-            train_labels.append(letter)                  
-            
-    X_train= np.array(train_images).reshape(-1,784)/255.0
-    Y_train= np.array(train_labels)
-    X_test= np.array(test_images).reshape(-1,784)/255.0
-    Y_test= np.array(test_labels)
-    
-    return X_train, Y_train, X_test, Y_test
-    
-    
-from matplotlib import pyplot as plt
-import numpy as np
-def training_curve_plot(title, train_costs, test_costs, train_accuracy, test_accuracy, batch_size, learning_rate, num_epochs, elapsed):
-    # Plot training curves in a format recomended for Hand-in assignment 1 and 2
-    #
-    # Input
-    # title - title for the plot
-    # train_costs - Array of training costs
-    # test_costs - Array of test costs
-    # train_accuracies - Array of training accuracies
-    # test_accuracies - Array of test accuracies
-    # batch_size - batch size for training data used during training
-    # num_epochs - Number of epochs used during training
-    # elapsed - Time elapsed in seconds during training
+def training_curve_plot_my(title, train_costs, test_costs, train_accuracy, test_accuracy,
+                        batch_size, learning_rate, num_epochs, elapsed):
 
-    lg=18
-    md=13
-    sm=9
-    fig, axs = plt.subplots(1, 2, figsize=(12, 4))
-    fig.suptitle(title, y=1.15, fontsize=lg)    
+    plt.style.use('seaborn-v0_8-darkgrid')
+
+    lg, md, sm = 15, 12, 10
+
+
+    fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+
+
+    # Subtitle (cleaner formatting)
     elapsed_min, elapsed_sec = divmod(elapsed, 60)
-    sub = f'|  Batch size:{batch_size}  |  Learning rate:{learning_rate} | Number of Epochs:{num_epochs} | Training time: {elapsed_min:.0f} min {elapsed_sec:.1f} sec |'
-    fig.text(0.5, 0.99, sub, ha='center', fontsize=md)
-    x = np.array(range(1, len(train_costs)+1))*num_epochs/len(train_costs)
-    axs[0].plot(x, train_costs, label=f'Final train cost: {train_costs[-1]:.4f}')
-    axs[0].plot(x, test_costs, label=f'Final test cost: {test_costs[-1]:.4f}')
-    axs[0].set_title('Costs', fontsize=md)
-    axs[0].set_xlabel('Epochs', fontsize=md)
-    axs[0].set_ylabel('Cost', fontsize=md)
-    axs[0].legend(fontsize=sm)
-    axs[0].tick_params(axis='both', labelsize=sm)
-    # Optionally use a logarithmic y-scale
-    #axs[0].set_yscale('log')
-    axs[1].plot(x, train_accuracy, label=f'Final train Dice: {100*train_accuracy[-1]:.2f}%')
-    axs[1].plot(x, test_accuracy, label=f'Final test Dice: {100*test_accuracy[-1]:.2f}%')
-    axs[1].set_title('Dice', fontsize=md)
-    axs[1].set_xlabel('Epochs', fontsize=md)
-    axs[1].set_ylabel('Dice (%)', fontsize=sm)
-    axs[1].legend(fontsize=sm)
-    axs[1].tick_params(axis='both', labelsize=sm)      
+    sub = (f'Batch size: {batch_size}   |   LR: {learning_rate}   |   '
+           f'Epochs: {num_epochs}   |   Time: {int(elapsed_min)}m {elapsed_sec:.0f}s')
+
+    fig.subplots_adjust(top=0.82)
+
+    fig.suptitle(title, fontsize=lg, weight='bold')
+    fig.text(0.5, 0.91,sub, ha='center', fontsize=md, alpha=0.8)
+
+    #plt.tight_layout(rect=[0, 0, 1, 0.85])  # <-- THIS fixes it
+
+    x = np.linspace(1, num_epochs, len(train_costs))
+    train_color = 'darkorchid'
+    test_color = 'limegreen'
+
+    # ---- COST PLOT ----
+    axs[0].plot(x, train_costs, color=train_color, linewidth=2, label='Train')
+    axs[0].plot(x, test_costs, color=test_color, linewidth=2, label='Test')
+
+    axs[0].scatter(x[-1], train_costs[-1], color=train_color, s=60)
+    axs[0].scatter(x[-1], test_costs[-1], color=test_color, s=60)
+    axs[0].annotate(f"{train_costs[-1]:.3f}",
+                (x[-1], train_costs[-1]),
+                textcoords="offset points",
+                xytext=(5, 5),
+                fontsize=10)
+
+    axs[0].annotate(f"{test_costs[-1]:.3f}",
+                    (x[-1], test_costs[-1]),
+                    textcoords="offset points",
+                    xytext=(5, -10),
+                    fontsize=10)
+
+    axs[0].set_title('Loss', fontsize=md)
+    axs[0].set_xlabel('Epochs')
+    axs[0].set_ylabel('Cost')
+    axs[0].legend()
+
+    # ---- ACCURACY PLOT ----
+    axs[1].plot(x, train_accuracy, color=train_color, linewidth=2, label='Train')
+    axs[1].plot(x, test_accuracy, color=test_color, linewidth=2, label='Test')
+
+    axs[1].scatter(x[-1], train_accuracy[-1], color=train_color, s=60)
+    axs[1].scatter(x[-1], test_accuracy[-1], color=test_color, s=60)
+    # Train point label
+    axs[1].annotate(f"{train_accuracy[-1]:.3f}",
+                    (x[-1], train_accuracy[-1]),
+                    textcoords="offset points",
+                    xytext=(5, 5),
+                    fontsize=10)
+
+    # Test point label
+    axs[1].annotate(f"{test_accuracy[-1]:.3f}",
+                    (x[-1], test_accuracy[-1]),
+                    textcoords="offset points",
+                    xytext=(5, -10),
+                    fontsize=10)
+
+    axs[1].set_title('Dice Coefficient', fontsize=md)
+    axs[1].set_xlabel('Epochs')
+    axs[1].set_ylabel('Dice Coefficient')
+
+    axs[1].legend()
+
+    axs[0].set_ylim(0, max(max(train_costs), max(test_costs)) * 1.1)
+    axs[1].set_ylim(0, 1)  # Dice is usually between 0 and 1
+
+    plt.show()
+
+
+def to_rgb(img_tensor):
+    img = img_tensor.squeeze().cpu().numpy()  # (2, H, W)
+
+    r, g = img[0], img[1]
+    b = np.zeros_like(r)
+
+    rgb = np.stack([r, g, b], axis=-1)
+
+    # Normalize for display
+    rgb = (rgb - rgb.min()) / (rgb.max() - rgb.min() + 1e-8)
+
+    return rgb
+
+
+def best_worst(how_many, dataset, model, device):
+    model.eval()
+
+    samples = []
+
+    with torch.no_grad():
+        for i in range(len(dataset)):
+            sample = dataset[i]
+
+            X = sample["image"].to(device) #.unsqueeze(0)
+            Y = sample["label"].to(device)
+
+            G = model(X).squeeze(0) #torch.sigmoid(model(X)).squeeze(0)
+            dice = dice_coef(G, Y, "inference").item()
+
+            pred = (torch.sigmoid(G) > 0.5).float().cpu()
+
+
+            samples.append({
+                "idx": i,
+                "dice": dice,
+                "img": sample["image"],   # keep CPU version
+                "gt": sample["label"],
+                "pred": pred
+            })
+
+    # Sort
+    samples_sorted = sorted(samples, key=lambda x: x["dice"])
+    print(samples_sorted)
+
+    worst = samples_sorted[:how_many]
+    best = samples_sorted[-how_many:][::-1]
+
+    return best, worst
+
+
+def plot_four_samples(samples):
+    fig, axes = plt.subplots(4, 3, figsize=(10, 12))
+
+    for row, s in enumerate(samples):
+        idx = s["idx"]
+        dice = s["dice"]
+        img = s["img"]
+        gt = s["gt"].squeeze()
+        pred = s["pred"]
+
+        # Input
+        axes[row, 0].imshow(to_rgb(img))
+        axes[row, 0].set_title(f"Sample ID: {idx+1}")
+        axes[row, 0].axis('off')
+
+        # GT
+        axes[row, 1].imshow(gt, cmap='gray')
+        axes[row, 1].set_title("Ground Truth")
+        axes[row, 1].axis('off')
+
+        # Prediction
+        axes[row, 2].imshow(pred, cmap='gray')
+        axes[row, 2].set_title(f"Prediction\nDice={dice:.3f}")
+        axes[row, 2].axis('off')
+
+    plt.tight_layout()
+    plt.show()
+
+
