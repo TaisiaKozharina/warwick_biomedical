@@ -2,11 +2,11 @@ import numpy as np
 import imageio
 import glob
 import matplotlib.pyplot as plt
-# import numpy as np
-# import imageio
-# import glob
-# import matplotlib.pyplot as plt
-# import torch
+import numpy as np
+import imageio
+import glob
+import matplotlib.pyplot as plt
+import torch
 
 def training_curve_plot(title, train_costs, test_costs, train_accuracy, test_accuracy,
                         batch_size, learning_rate, num_epochs, elapsed):
