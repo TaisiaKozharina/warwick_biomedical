@@ -2,6 +2,11 @@ import numpy as np
 import imageio
 import glob
 import matplotlib.pyplot as plt
+# import numpy as np
+# import imageio
+# import glob
+# import matplotlib.pyplot as plt
+# import torch
 
 def training_curve_plot(title, train_costs, test_costs, train_accuracy, test_accuracy,
                         batch_size, learning_rate, num_epochs, elapsed):
@@ -100,7 +105,7 @@ def to_rgb(img_tensor):
     return rgb
 
 
-def best_worst(how_many, dataset, model, device):
+def best_worst(how_many, dataset, model, device, thresh=0.6):
     model.eval()
 
     samples = []
@@ -109,26 +114,25 @@ def best_worst(how_many, dataset, model, device):
         for i in range(len(dataset)):
             sample = dataset[i]
 
-            X = sample["image"].to(device) #.unsqueeze(0)
-            Y = sample["label"].to(device)
+            X = sample["image"].unsqueeze(0).to(device) #.unsqueeze(0)
+            Y = sample["label"].unsqueeze(0).to(device)
 
             G = model(X).squeeze(0) #torch.sigmoid(model(X)).squeeze(0)
             dice = dice_coef(G, Y, "inference").item()
 
-            pred = (torch.sigmoid(G) > 0.5).float().cpu()
+            pred = (torch.sigmoid(G) > thresh).float()
 
 
             samples.append({
                 "idx": i,
                 "dice": dice,
-                "img": sample["image"],   # keep CPU version
+                "img": sample["image"].squeeze(0),   # keep CPU version
                 "gt": sample["label"],
-                "pred": pred
+                "pred": pred.squeeze(0)
             })
 
     # Sort
     samples_sorted = sorted(samples, key=lambda x: x["dice"])
-    print(samples_sorted)
 
     worst = samples_sorted[:how_many]
     best = samples_sorted[-how_many:][::-1]
@@ -144,7 +148,7 @@ def plot_four_samples(samples):
         dice = s["dice"]
         img = s["img"]
         gt = s["gt"].squeeze()
-        pred = s["pred"]
+        pred = s["pred"].cpu()
 
         # Input
         axes[row, 0].imshow(to_rgb(img))
@@ -163,5 +167,7 @@ def plot_four_samples(samples):
 
     plt.tight_layout()
     plt.show()
+
+
 
 
